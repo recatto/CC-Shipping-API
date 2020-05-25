@@ -1,10 +1,10 @@
-public class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndHandling {
+global class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndHandling {
 
     public override List<ccrz.cc_ctrl_hlpr_ShippingOption> getShippingOptions(String zipCode, String stateCode, String countryCode, Id cartId, String storeName) {
   
-        // realizar uma nova listagem de "Helper Shipping Option" - que eh o dropdown "Shipping Method" da pagina de Shipping Information do CheckOut
+        // realizar uma nova listagem de 'Helper Shipping Option' - que eh o dropdown 'Shipping Method' da pagina de Shipping Information do CheckOut
         List <ccrz.cc_ctrl_hlpr_ShippingOption> shippingOptions = new List<ccrz.cc_ctrl_hlpr_ShippingOption>();
-    
+    	
         // listar o carrinho ativo que vem como parametro no metodo
         ccrz__E_Cart__c cart = [
             SELECT ccrz__Account__c, ccrz__ActiveCart__c, ccrz__CartStatus__c, ccrz__CCEmailAddress__c, ccrz__BuyerCompanyName__c, 	ccrz__Contact__c,
@@ -27,6 +27,7 @@ public class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndH
             WHERE Id=: idAcct
         ];
         
+        
         // obter o resultado do id armazenado no idAcct que chamamos via CallContext e armazenar na account que criamos
         for(Account a1 : accts){
             aInfo.ShippingState = a1.ShippingState;
@@ -40,12 +41,18 @@ public class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndH
         if(aInfo.ShippingState == Null && aInfo.BillingState != Null){
             aInfo.ShippingState = aInfo.BillingState;
         }
- 
+ 		        
+        ccrz.ccLog.log(LoggingLevel.DEBUG, 'estadoConvert -> ' + aInfo.ShippingState);
+        
+        String ret = retornaEstado(aInfo.ShippingState);
+        
+        ccrz.ccLog.log(LoggingLevel.DEBUG, 'return estadoConvert -> ' + ret);
+        
         // listar os shipping rates cadastrados, utilizar o ShippingState como filtro
         List <ccrz__E_ShippingRate__c> options = [
             SELECT Name, Estado__c, Cidade__c, ccrz__CurrencyISOCode__c, ccrz__MaxWeight__c, ccrz__MinWeight__c, ccrz__Shipper__c, ccrz__ShippingRate__c, ccrz__Storefront__c
             FROM ccrz__E_ShippingRate__c
-            WHERE Estado__c =: aInfo.ShippingState
+            WHERE Estado__c =: ret
         ];
 
         // listar os itens do carrinho, passando como filtro da query o id do carrinho ativo
@@ -100,10 +107,10 @@ public class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndH
                 //caso contrário, ele segue o fluxo normal de cálculo de frete
             }else {
             	ship.provider = option.Name;
-            	ship.serviceName = option.ccrz__Shipper__c + ' - R$/t ' + option.ccrz__ShippingRate__c;
+                ship.serviceName = option.ccrz__Shipper__c + ' - R$/t ' + option.ccrz__ShippingRate__c;
 				ship.currencyCode = option.ccrz__CurrencyISOCode__c;
-           		ship.price = weight * rate;
-            	ship.uniqueId = ship.provider;
+                ship.price = weight * rate;
+                ship.uniqueId = ship.provider;
             	shippingOptions.add(ship); 
             }
         }
@@ -117,4 +124,97 @@ public class cc_api_ShippingAndHandlingOverride extends ccrz.cc_api_ShippingAndH
         return peso/tonelada;
     }
 
+    public String retornaEstado(String estado){
+        String ret;
+        switch on estado {
+            when 'Acre'{
+            	return ret = 'AC';
+            	}
+            when 'Alagoas'{
+            	return ret = 'AL';
+            	}
+            when 'Amapá'{
+                return ret = 'AP';
+            }
+            when 'Amazonas'{
+                return ret = 'AM';
+                }
+            when 'Bahia'{
+                return ret = 'BA';
+            }
+            when 'Ceará'{
+                return ret = 'CE';
+            }
+            when 'Distrito Federal'{
+                return ret = 'DF';
+            }
+            when 'Espírito Santo'{
+                return ret = 'ES';
+            }
+            when 'Goiás'{
+                return ret = 'GO';
+            }
+            when 'Maranhão'{
+                return ret = 'MA';
+            }
+            when 'Mato Grosso'{
+                return ret = 'MT';
+            }
+            when 'Mato Grosso do Sul'{
+                return ret = 'MS';
+            }
+            when 'Minas Gerais'{
+                return ret = 'MG';
+            }
+            when 'Pará'{
+                return ret = 'PA';
+            }
+            when 'Paraíba'{
+                return ret = 'PB';
+            }
+            when 'Paraná'{
+                return ret = 'PR';
+            }
+            when 'Pernambuco'{
+                return ret = 'PE';
+            }
+            when 'Piauí'{
+                return ret = 'PI';
+            }
+            when 'Rio de Janeiro'{
+                return ret = 'RJ';
+            }
+            when 'Rio Grande do Norte'{
+                return ret = 'RN';
+            }
+            when 'Rio Grande do Sul'{
+                return ret = 'RS';
+            }
+            when 'Rondônia'{
+                return ret = 'RO';
+            }
+            when 'Roraima'{
+                return ret = 'RR';
+            }
+            when 'Santa Catarina'{
+                return ret = 'SC';
+            }
+            when 'São Paulo'{
+                ret = 'SP';
+            }
+            when 'Sergipe'{
+                return ret = 'SE';
+            }
+            when 'Tocantins'{
+              return ret = 'TO';
+            }
+            
+            when else{
+            return ret = estado;  
+                
+        	}
+        }
+        return ret;
+    }
+    
 }
